@@ -11,7 +11,7 @@
 	<a href="/logs/new">New Log</a>
 	<a href="/machines">View Machines</a>
 	<c:forEach var="log" items="${logList}">
-		<a href="/logs/${log.id}"><c:out value="${log.id}"/></a>
+		<p><a href="/logs/${log.id}"><c:out value="${log.id}"/></a></p>
 		<ul>
 		<c:forEach var="maintenance" items="${log.maintenancePerformed}">
 			<li><c:out value="${maintenance.name}"/></li>

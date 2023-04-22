@@ -1,7 +1,6 @@
 package com.rapidprototypes.machinemaintenancelogger.services;
 
-import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -37,7 +36,7 @@ public class FileUtil {
 		
 		Calendar cal = Calendar.getInstance();
 		
-		String folderName = String.format("%d%d%d-%d%d", cal.get(Calendar.MONTH) + 1, cal.get(Calendar.DATE), cal.get(Calendar.YEAR), cal.get(Calendar.HOUR), cal.get(Calendar.MINUTE));
+		String folderName = String.format("%d%d%d-%d%d", (cal.get(Calendar.MONTH) + 1), cal.get(Calendar.DATE), cal.get(Calendar.YEAR), cal.get(Calendar.HOUR), cal.get(Calendar.MINUTE));
 		
 		Path uploadPath = Paths.get("../Logs/" + folderName);
 		
@@ -45,9 +44,11 @@ public class FileUtil {
 			Files.createDirectories(uploadPath);
 		}
 		
-		
-		
-		try (FileOutputStream out = new FileOutputStream("log-" + folderName + ".html")){
+		try {
+			FileWriter fileWriter = new FileWriter(uploadPath.toString() + "/log-" + folderName + ".html");
+			fileWriter.write(htmlString);
+			fileWriter.close();
+			System.out.println("Successfully wrote to file");
 		} catch(Exception e) {
 			throw new IOException("Couldn't read log text because: " + e.getMessage(), e);
 		}

@@ -86,7 +86,7 @@ public class MainController {
 			if(multipartFiles.get(i).isEmpty()) continue;
 			
 			Picture picture = new Picture();
-			picture.setFilename(multipartFiles.get(i).getName());
+			picture.setFilename(multipartFiles.get(i).getOriginalFilename());
 			picture.setLog(newLog);
 			pictureService.savePicture(picture);
 			
