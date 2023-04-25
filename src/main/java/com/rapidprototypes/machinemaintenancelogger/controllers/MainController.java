@@ -2,6 +2,7 @@ package com.rapidprototypes.machinemaintenancelogger.controllers;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
@@ -58,8 +59,9 @@ public class MainController {
 	
 	@GetMapping("/logs/{id}")
 	public String showLog(@PathVariable("id") Long id, Model model) {
-		model.addAttribute("log", logService.findById(id));
-		
+		Log log = logService.findById(id);
+		model.addAttribute("log", log);
+		model.addAttribute("pictureList", log.getPictures());
 		return "show-log.jsp";
 	}
 	
@@ -68,6 +70,7 @@ public class MainController {
 		Log newLog = new Log();
 		Machine machine = machineService.findById(Long.parseLong(allParams.get("machine")));
 		List<MaintenanceItem> maintenancePerformed = new ArrayList<MaintenanceItem>();
+		List<Picture> logPictureList = new ArrayList<Picture>();
 		
 		for(int i = 0; i < machine.getMaintenanceItems().size(); i++) {
 			if(allParams.get("maintenance-".concat(String.valueOf(i))) == null) continue;
@@ -80,22 +83,48 @@ public class MainController {
 		newLog.setMachine(machine);
 		newLog.setMaintenancePerformed(maintenancePerformed);
 		
-		logService.saveLog(newLog);
 		
 		for(int i = 0; i < multipartFiles.size(); i++) {
 			if(multipartFiles.get(i).isEmpty()) continue;
 			
 			Picture picture = new Picture();
-			picture.setFilename(multipartFiles.get(i).getOriginalFilename());
-			picture.setLog(newLog);
-			pictureService.savePicture(picture);
 			
+			byte imageData[] = null;
+			try {
+				imageData = multipartFiles.get(i).getBytes();
+			} catch(IOException e) {
+				System.err.println("Couldn't read image data to byte array. Error: " + e.getMessage());
+			}
+			
+			String pictureFileName = multipartFiles.get(i).getOriginalFilename();
+			String pictureFileType = pictureFileName.substring(pictureFileName.indexOf(".") + 1);
+			String imageDataString = Base64.getEncoder().encodeToString(imageData);
+			
+			picture.setFileType(pictureFileType);
+			picture.setFileName(pictureFileName);
+			picture.setImageDataBase64(imageDataString);
+			logPictureList.add(picture);
 			
 			try {
 				FileUtil.saveResource(multipartFiles.get(i));
 			} catch(IOException e) {
 				System.out.println("IOException: " + e.getMessage());
 			}
+		}	
+		
+		newLog.setPictures(logPictureList);
+		Log savedLog = logService.saveLog(newLog);
+		
+		for(Picture picture : logPictureList) {
+			picture.setLog(savedLog);
+			pictureService.savePicture(picture);
+		}
+		
+		
+		try {
+			FileUtil.saveHTML(logService.getLogHTML(savedLog));
+		} catch(IOException e) {
+			System.err.println("Couldn't save HTML file. Error: " + e.getMessage());
 		}
 		
 		return "redirect:/";
